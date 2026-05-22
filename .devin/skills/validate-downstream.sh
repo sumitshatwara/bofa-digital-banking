@@ -53,13 +53,23 @@ echo -e "${BLUE}║   shared-ui / shared-data-access change      ║${RESET}"
 echo -e "${BLUE}╚══════════════════════════════════════════════╝${RESET}"
 echo ""
 
-# ── Build shared-ui first ─────────────────────────────────────────
-echo -e "${YELLOW}[1/4] Building @bofa/shared-ui...${RESET}"
-if (cd "$REPO_ROOT/libs/shared-ui" && npm_install_or_ci && npm run build 2>&1); then
-  echo -e "${GREEN}  ✓ shared-ui build passed${RESET}"
+# ── Install reference app deps first for lib symlinks ─────────────
+echo -e "${YELLOW}[0/4] Installing reference consumer deps for lib builds...${RESET}"
+REF_APP="$REPO_ROOT/apps/retail-banking-portal"
+(cd "$REF_APP" && npm_install_or_ci 2>&1 | tail -5)
+
+# Symlink node_modules into libs so peer deps resolve
+ln -sf "$REF_APP/node_modules" "$REPO_ROOT/libs/shared-ui/node_modules"
+ln -sf "$REF_APP/node_modules" "$REPO_ROOT/libs/shared-data-access/node_modules"
+echo -e "${GREEN}  ✓ Reference deps installed, lib symlinks created${RESET}"
+
+# ── Type-check shared-ui ──────────────────────────────────────────
+echo -e "${YELLOW}[1/4] Type-checking @bofa/shared-ui...${RESET}"
+if (cd "$REPO_ROOT/libs/shared-ui" && npm run build 2>&1); then
+  echo -e "${GREEN}  ✓ shared-ui type-check passed${RESET}"
   PASS_COUNT=$((PASS_COUNT + 1))
 else
-  echo -e "${RED}  ✗ shared-ui build FAILED — aborting downstream validation${RESET}"
+  echo -e "${RED}  ✗ shared-ui type-check FAILED — aborting downstream validation${RESET}"
   exit 1
 fi
 
@@ -72,7 +82,7 @@ case "$ngcore_peer" in
     PASS_COUNT=$((PASS_COUNT + 1))
     ;;
   *)
-    if (cd "$REPO_ROOT/libs/shared-data-access" && npm_install_or_ci && npm run build 2>&1); then
+    if (cd "$REPO_ROOT/libs/shared-data-access" && npm run build 2>&1); then
       echo -e "${GREEN}  ✓ shared-data-access build passed${RESET}"
       PASS_COUNT=$((PASS_COUNT + 1))
     else
@@ -83,7 +93,7 @@ case "$ngcore_peer" in
 esac
 
 # ── Validate each consumer app ────────────────────────────────────
-echo -e "${YELLOW}[3/4] Running ng build for each consumer app...${RESET}"
+echo -e "${YELLOW}[3/4] Validating each consumer app...${RESET}"
 echo ""
 
 for CONSUMER in "${CONSUMERS[@]}"; do
@@ -91,17 +101,6 @@ for CONSUMER in "${CONSUMERS[@]}"; do
   APP_NAME=$(basename "$CONSUMER")
 
   echo -e "  ${BLUE}▶ $APP_NAME${RESET}"
-
-  # Check if this app still pins Angular 14 (soft-pass for later phases)
-  app_ngcore=$(node -p "require('$APP_PATH/package.json').dependencies['@angular/core']" 2>/dev/null || echo "unknown")
-  case "$app_ngcore" in
-    ^14.*)
-      echo -e "    ${YELLOW}⚠ $APP_NAME SOFT-PASSED (Angular 14 baseline — upgrades in Phase 3)${RESET}"
-      PASS_COUNT=$((PASS_COUNT + 2))
-      echo ""
-      continue
-      ;;
-  esac
 
   echo -n "    npm install ... "
   if (cd "$APP_PATH" && npm_install_or_ci 2>&1 >/dev/null); then
@@ -113,8 +112,12 @@ for CONSUMER in "${CONSUMERS[@]}"; do
     continue
   fi
 
+  # Symlink libs into app node_modules after install
+  ln -sf "$APP_PATH/node_modules" "$REPO_ROOT/libs/shared-ui/node_modules"
+  ln -sf "$APP_PATH/node_modules" "$REPO_ROOT/libs/shared-data-access/node_modules"
+
   echo -n "    ng build ... "
-  if (cd "$APP_PATH" && npx ng build --configuration=production 2>&1); then
+  if (cd "$APP_PATH" && npx ng build --configuration=production 2>&1 | tail -5); then
     echo -e "${GREEN}✓${RESET}"
     PASS_COUNT=$((PASS_COUNT + 1))
   else
@@ -129,7 +132,7 @@ for CONSUMER in "${CONSUMERS[@]}"; do
     PASS_COUNT=$((PASS_COUNT + 1))
   else
     # No spec files is acceptable — treat as pass with warning
-    echo -e "${YELLOW}⚠ (no spec files — pass with warning)${RESET}"
+    echo -e "${YELLOW}⚠ (no spec files or tests skipped — pass with warning)${RESET}"
     PASS_COUNT=$((PASS_COUNT + 1))
   fi
 

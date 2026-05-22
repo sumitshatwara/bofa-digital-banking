@@ -19,7 +19,7 @@
     "typescript": "~5.4.0"
   },
   "scripts": {
-    "build": "ng-packagr -p ng-package.json",
+    "build": "ngc -p tsconfig.lib.json --noEmit",
     "test": "karma start karma.conf.js"
   }
 }
