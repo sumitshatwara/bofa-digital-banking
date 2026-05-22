@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, from } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
@@ -55,8 +55,9 @@ export class AnalyticsService {
   private sdkInitialized = false;
   private eventQueue: Array<{ category: string; action: string; label?: string }> = [];
 
-  // MIGRATION TARGET: Replace with inject(HttpClient)
-  constructor(private http: HttpClient) {
+  private http = inject(HttpClient);
+
+  constructor() {
     this.initializeSdk();
   }
 
