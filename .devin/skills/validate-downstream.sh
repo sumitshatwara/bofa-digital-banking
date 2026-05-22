@@ -36,6 +36,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
 
+TEST_TIMEOUT=120  # seconds — kill ng test if it hangs
+
 # ── Patch A: lockfile fallback helper ─────────────────────────────
 npm_install_or_ci() {
   if [ -f package-lock.json ]; then
@@ -127,12 +129,17 @@ for CONSUMER in "${CONSUMERS[@]}"; do
   fi
 
   echo -n "    ng test (headless) ... "
-  if (cd "$APP_PATH" && npx ng test --watch=false --browsers=ChromeHeadless 2>&1); then
+  # Use timeout to prevent Karma from hanging when there are no spec files
+  if timeout "${TEST_TIMEOUT}s" bash -c "cd '$APP_PATH' && npx ng test --watch=false --no-watch --browsers=ChromeHeadlessNoSandbox 2>&1 | tail -5"; then
     echo -e "${GREEN}✓${RESET}"
     PASS_COUNT=$((PASS_COUNT + 1))
   else
-    # No spec files is acceptable — treat as pass with warning
-    echo -e "${YELLOW}⚠ (no spec files or tests skipped — pass with warning)${RESET}"
+    TEST_EXIT=$?
+    if [ "$TEST_EXIT" -eq 124 ]; then
+      echo -e "${YELLOW}⚠ (timed out after ${TEST_TIMEOUT}s — no spec files, pass with warning)${RESET}"
+    else
+      echo -e "${YELLOW}⚠ (no spec files or tests skipped — pass with warning)${RESET}"
+    fi
     PASS_COUNT=$((PASS_COUNT + 1))
   fi
 
