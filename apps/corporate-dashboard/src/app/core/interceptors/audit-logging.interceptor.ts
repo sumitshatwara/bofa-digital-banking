@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { SsoAuthService } from '../../auth/sso-auth.service';
+import { environment } from '../../../environments/environment';
 
 function extractCorrelationId(token: string): string {
   try {
@@ -29,7 +30,7 @@ export const auditLoggingInterceptor: HttpInterceptorFn = (req, next) => {
   const auditedReq = req.clone({
     headers: req.headers
       .set('X-Correlation-ID', correlationId)
-      .set('X-Client-App', 'corporate-dashboard')
+      .set('X-Client-App', environment.appName)
   });
 
   console.info(`[AUDIT] ${req.method} ${sanitizeUrl(req.url)} — CID: ${correlationId}`);
