@@ -10,30 +10,19 @@ export type BfaButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive'
 export type BfaButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * BofA Shared UI — Button Component (Angular Material v14).
+ * BofA Shared UI — Button Component.
  *
- * Wraps Angular Material v14 MatButton with BofA design tokens.
- *
- * MIGRATION NOTE (Devin — Phase 3):
- *   This component is declared inside SharedUiModule (NgModule pattern).
- *   Migration target: add standalone: true, add imports: [MatButtonModule, ...].
- *   Export as a named standalone component from index.ts barrel.
- *
- * MIGRATION NOTE (Devin — Phase 5):
- *   Angular Material v18 changed mat-button color input — 'primary' color
- *   is no longer a valid ThemePalette. Use custom CSS classes with
- *   Material Design 3 tokens instead. See Angular Material v18 migration guide.
+ * Angular Material v18 / MD3: ThemePalette color inputs ('primary', 'warn')
+ * are replaced with CSS custom properties. Variant styling is applied via
+ * BEM classes (bofa-btn--primary, bofa-btn--destructive, etc.).
  */
 @Component({
   selector: 'bofa-button',
-  // NOT standalone — declared in SharedUiModule
-  // standalone: true  ← add in Phase 3
   template: `
     <button
       [attr.mat-button]="variant === 'ghost' ? '' : null"
       [attr.mat-raised-button]="variant === 'primary' ? '' : null"
       [attr.mat-stroked-button]="variant === 'secondary' ? '' : null"
-      [color]="variant === 'primary' ? 'primary' : variant === 'destructive' ? 'warn' : undefined"
       [disabled]="disabled || isLoading"
       [class]="'bofa-btn bofa-btn--' + variant + ' bofa-btn--' + size"
       [attr.aria-busy]="isLoading"

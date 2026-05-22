@@ -9,7 +9,7 @@ import {
   ChangeDetectionStrategy
 } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatSort, Sort } from '@angular/material/sort';
+import { MatSort, SortDirection } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
 
 export interface TableColumn<T = any> {
@@ -21,52 +21,26 @@ export interface TableColumn<T = any> {
   formatter?: (value: any, row: T) => string;
 }
 
+export interface SortState {
+  active: string;
+  direction: SortDirection;
+}
+
 /**
- * BofA Shared Data Table — wraps Angular Material v14 mat-table with sort.
+ * BofA Shared Data Table — wraps Angular Material mat-table with sort.
  *
- * ─────────────────────────────────────────────────────────────────────
- * ANGULAR MATERIAL v14 SORT BINDING (current — deprecated in v18):
- *
- *   <mat-table
- *     [dataSource]="dataSource"
- *     matSort
- *     [matSortActive]="initialSortColumn"
- *     [matSortDirection]="initialSortDirection"
- *     (matSortChange)="onSortChange($event)">
- *
- *   matSortActive and matSortDirection are INPUT bindings on the mat-table
- *   host element in v14. They are NOT the same as the MatSort directive
- *   properties in v18.
- * ─────────────────────────────────────────────────────────────────────
- *
- * MIGRATION NOTE (Devin — Phase 5 — Angular Material v14 → v18):
- *   In Angular Material v18, [matSortActive] and [matSortDirection] inputs
- *   were removed from mat-table. Initialize sort state directly on MatSort:
- *
- *     // AfterViewInit:
- *     this.sort.active = 'transactionDate';
- *     this.sort.direction = 'desc';
- *     this.sort.sortChange.emit();
- *
- *   The (matSortChange) event type changes from Sort → SortState in v18.
- *   MatSortModule must be explicitly imported in standalone components.
- *   'legacy' form field appearance is removed — replace with 'outline'.
- *
- * MIGRATION NOTE (Devin — Phase 3):
- *   Add standalone: true with imports: [MatTableModule, MatSortModule,
- *   MatPaginatorModule, CommonModule, MatIconModule].
+ * Angular Material v18: [matSortActive] and [matSortDirection] template
+ * bindings removed. Sort state is initialized programmatically in
+ * ngAfterViewInit via MatSort instance properties.
  */
 @Component({
   selector: 'bofa-data-table',
-  // NOT standalone — declared in SharedUiModule
   template: `
     <div class="bofa-table-wrapper" [class.bofa-table--loading]="isLoading">
       <table
         mat-table
         [dataSource]="dataSource"
         matSort
-        [matSortActive]="initialSortColumn"
-        [matSortDirection]="initialSortDirection"
         (matSortChange)="onSortChange($event)"
         [attr.aria-label]="ariaLabel"
         class="bofa-data-table">
@@ -138,11 +112,10 @@ export class BfaDataTableComponent implements OnInit, AfterViewInit {
   @Input() ariaLabel = 'Data table';
   @Input() actionsTemplate: any;
 
-  // Angular Material v14 sort binding inputs — see migration note above
   @Input() initialSortColumn = '';
-  @Input() initialSortDirection: 'asc' | 'desc' | '' = 'desc';
+  @Input() initialSortDirection: SortDirection = 'desc';
 
-  @Output() sortChange = new EventEmitter<Sort>();
+  @Output() sortChange = new EventEmitter<SortState>();
   @Output() pageChange = new EventEmitter<any>();
   @Output() rowSelect = new EventEmitter<any>();
 
@@ -154,12 +127,18 @@ export class BfaDataTableComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
-    if (this.sort) this.dataSource.sort = this.sort;
+    if (this.sort) {
+      if (this.initialSortColumn) {
+        this.sort.active = this.initialSortColumn;
+        this.sort.direction = this.initialSortDirection;
+      }
+      this.dataSource.sort = this.sort;
+    }
     if (this.paginator) this.dataSource.paginator = this.paginator;
   }
 
-  onSortChange(sort: Sort): void {
-    this.sortChange.emit(sort);
+  onSortChange(sortState: SortState): void {
+    this.sortChange.emit(sortState);
   }
 
   onPageChange(event: any): void {
