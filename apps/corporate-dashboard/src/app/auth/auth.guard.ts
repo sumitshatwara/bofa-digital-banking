@@ -1,19 +1,22 @@
-import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
 import { SsoAuthService } from './sso-auth.service';
 
-@Injectable({ providedIn: 'root' })
-export class AuthGuard implements CanActivate {
-  constructor(
-    private authService: SsoAuthService,
-    private router: Router
-  ) {}
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(SsoAuthService);
+  const router = inject(Router);
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    if (this.authService.isAuthenticated()) {
-      return true;
-    }
-    this.authService.initiateSamlLogin(state.url);
+  if (!authService.isAuthenticated()) {
+    authService.initiateSamlLogin(state.url);
     return false;
   }
-}
+
+  const requiredRole: string | undefined = route.data?.['requiresRole'];
+  if (requiredRole && !authService.hasRole(requiredRole)) {
+    return router.createUrlTree(['/unauthorized'], {
+      queryParams: { returnUrl: state.url }
+    });
+  }
+
+  return true;
+};
