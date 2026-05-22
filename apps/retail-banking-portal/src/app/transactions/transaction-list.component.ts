@@ -4,38 +4,42 @@ import {
   OnDestroy,
   ViewChild,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  inject
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { MatSort } from '@angular/material/sort';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, switchMap } from 'rxjs/operators';
-import { FormControl } from '@angular/forms';
-
+import { takeUntil, debounceTime } from 'rxjs/operators';
+import { SharedUiModule, BfaDataTableComponent, SortState } from '@bofa/shared-ui';
 import { Transaction, TransactionFilter, TransactionCategory } from './transaction.model';
 import { BankingApiService } from '@bofa/shared-data-access';
-import { BfaDataTableComponent, SortState } from '@bofa/shared-ui';
 
-/**
- * Transaction List — displays paginated, sortable transaction history.
- *
- * Consumes @bofa/shared-ui BfaDataTableComponent (Angular Material v14).
- *
- * MIGRATION NOTE (Devin — Phase 5):
- *   MatSort binding has changed in Angular Material v18.
- *   Current v14 pattern: [matSortActive] + [matSortDirection] inputs on <mat-table>.
- *   Angular Material v18 pattern uses MatSortModule with matSort directive.
- *   See shared-ui/bfa-data-table migration notes for the full diff.
- *
- * MIGRATION NOTE (Devin — Phase 3):
- *   Add standalone: true; add imports array with MatTableModule, MatSortModule,
- *   MatPaginatorModule, BfaDataTableComponent (standalone export from shared-ui).
- *   Remove from app.module.ts declarations.
- */
 @Component({
   selector: 'bofa-transaction-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    SharedUiModule
+  ],
   templateUrl: './transaction-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -72,15 +76,11 @@ export class TransactionListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  // MIGRATION TARGET: Replace constructor injection with inject()
-  constructor(
-    private bankingApi: BankingApiService,
-    private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
-  ) {}
+  private bankingApi = inject(BankingApiService);
+  private route = inject(ActivatedRoute);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    // Read accountId from query params (set by dashboard account card links)
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
@@ -92,7 +92,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
         this.loadTransactions();
       });
 
-    // Debounced search
     this.searchControl.valueChanges
       .pipe(
         debounceTime(300),
@@ -115,7 +114,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
           this.dataSource.data = page.transactions;
           this.totalCount = page.totalCount;
           this.isLoading = false;
-          // Wire up sort after data loads (static: false requires this pattern)
           setTimeout(() => {
             if (this.sort) this.dataSource.sort = this.sort;
             if (this.paginator) this.dataSource.paginator = this.paginator;
@@ -149,7 +147,6 @@ export class TransactionListComponent implements OnInit, OnDestroy {
   }
 
   flagForReview(transaction: Transaction): void {
-    // Opens fraud review modal — delegates to FraudDetectionService
     console.log('[TransactionList] Flagging transaction for review:', transaction.transactionId);
   }
 

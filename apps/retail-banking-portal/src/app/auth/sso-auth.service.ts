@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -51,8 +51,9 @@ export class SsoAuthService {
     sessionExpiry: null
   });
 
-  // MIGRATION TARGET: Replace constructor injection with inject()
-  constructor(private http: HttpClient) {
+  private http = inject(HttpClient);
+
+  constructor() {
     this.restoreSessionFromStorage();
   }
 

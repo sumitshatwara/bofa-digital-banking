@@ -1,105 +1,102 @@
-<!-- BofA Retail Banking Dashboard — Angular 14 template -->
-<!-- MIGRATION NOTE: Post-Phase 3, use @if / @for control flow syntax (Angular 17+) -->
+@if (!viewModel.isLoading) {
+  <div class="bofa-dashboard">
 
-<div class="bofa-dashboard" *ngIf="!viewModel.isLoading; else loadingTemplate">
+    @if (viewModel.error) {
+      <bofa-notification-banner
+        [message]="viewModel.error"
+        type="error"
+        [dismissible]="true">
+      </bofa-notification-banner>
+    }
 
-  <!-- Error Banner -->
-  <bofa-notification-banner
-    *ngIf="viewModel.error"
-    [message]="viewModel.error"
-    type="error"
-    [dismissible]="true">
-  </bofa-notification-banner>
-
-  <!-- Dashboard Header -->
-  <header class="dashboard-header">
-    <div class="dashboard-header__welcome">
-      <h1 class="dashboard-header__title">Good morning</h1>
-      <p class="dashboard-header__subtitle">
-        Here's your financial summary for today
-      </p>
-    </div>
-    <div class="dashboard-header__alerts" *ngIf="viewModel.alertCount > 0">
-      <mat-icon color="warn">notifications_active</mat-icon>
-      <span class="alert-badge">{{ viewModel.alertCount }}</span>
-    </div>
-  </header>
-
-  <!-- Balance Summary Panel — ViewChild target -->
-  <section #balanceSummaryPanel class="balance-summary" aria-label="Account Balance Summary">
-    <div class="balance-summary__total">
-      <span class="balance-summary__label">Total Available Balance</span>
-      <span class="balance-summary__amount">
-        {{ viewModel.totalBalance | currency:'USD':'symbol':'1.2-2' }}
-      </span>
-    </div>
-    <div class="balance-summary__meta">
-      <div class="balance-summary__stat">
-        <mat-icon>pending</mat-icon>
-        <span>{{ viewModel.pendingTransactions }} pending transactions</span>
+    <header class="dashboard-header">
+      <div class="dashboard-header__welcome">
+        <h1 class="dashboard-header__title">Good morning</h1>
+        <p class="dashboard-header__subtitle">
+          Here's your financial summary for today
+        </p>
       </div>
-      <div class="balance-summary__stat">
-        <mat-icon>insights</mat-icon>
-        <span>Spending score: {{ viewModel.spendingScore }}/100</span>
+      @if (viewModel.alertCount > 0) {
+        <div class="dashboard-header__alerts">
+          <mat-icon color="warn">notifications_active</mat-icon>
+          <span class="alert-badge">{{ viewModel.alertCount }}</span>
+        </div>
+      }
+    </header>
+
+    <section #balanceSummaryPanel class="balance-summary" aria-label="Account Balance Summary">
+      <div class="balance-summary__total">
+        <span class="balance-summary__label">Total Available Balance</span>
+        <span class="balance-summary__amount">
+          {{ viewModel.totalBalance | currency:'USD':'symbol':'1.2-2' }}
+        </span>
       </div>
-    </div>
-  </section>
-
-  <!-- Account Cards -->
-  <section class="accounts-grid" aria-label="Your Accounts">
-    <h2 class="section-title">Your Accounts</h2>
-    <div class="accounts-grid__list">
-      <div
-        class="account-card"
-        *ngFor="let account of viewModel.accounts; trackBy: trackByAccountId"
-        [class.account-card--primary]="account.isPrimary"
-        role="article"
-        [attr.aria-label]="account.accountName + ' account'">
-
-        <div class="account-card__header">
-          <span class="account-card__type">{{ account.accountType }}</span>
-          <span class="account-card__number">
-            ····{{ account.accountNumber | slice:-4 }}
-          </span>
+      <div class="balance-summary__meta">
+        <div class="balance-summary__stat">
+          <mat-icon>pending</mat-icon>
+          <span>{{ viewModel.pendingTransactions }} pending transactions</span>
         </div>
-
-        <div class="account-card__name">{{ account.accountName }}</div>
-
-        <div class="account-card__balance">
-          <span class="account-card__balance-label">Available</span>
-          <span class="account-card__balance-amount">
-            {{ account.availableBalance | currency:'USD':'symbol':'1.2-2' }}
-          </span>
-        </div>
-
-        <div class="account-card__actions">
-          <bofa-button variant="secondary" size="sm" [routerLink]="['/transactions']"
-            [queryParams]="{ accountId: account.accountId }">
-            View Transactions
-          </bofa-button>
-          <bofa-button variant="ghost" size="sm" [disabled]="true">
-            Transfer
-          </bofa-button>
+        <div class="balance-summary__stat">
+          <mat-icon>insights</mat-icon>
+          <span>Spending score: {{ viewModel.spendingScore }}/100</span>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Spending Analytics Chart -->
-  <section class="spending-analytics" aria-label="Spending Analytics">
-    <h2 class="section-title">Spending Overview</h2>
-    <canvas #chartCanvas role="img" aria-label="Monthly spending chart"></canvas>
-  </section>
+    <section class="accounts-grid" aria-label="Your Accounts">
+      <h2 class="section-title">Your Accounts</h2>
+      <div class="accounts-grid__list">
+        @for (account of viewModel.accounts; track account.accountId) {
+          <div
+            class="account-card"
+            [class.account-card--primary]="account.isPrimary"
+            role="article"
+            [attr.aria-label]="account.accountName + ' account'">
 
-</div>
+            <div class="account-card__header">
+              <span class="account-card__type">{{ account.accountType }}</span>
+              <span class="account-card__number">
+                ····{{ account.accountNumber | slice:-4 }}
+              </span>
+            </div>
 
-<!-- Loading Template -->
-<ng-template #loadingTemplate>
+            <div class="account-card__name">{{ account.accountName }}</div>
+
+            <div class="account-card__balance">
+              <span class="account-card__balance-label">Available</span>
+              <span class="account-card__balance-amount">
+                {{ account.availableBalance | currency:'USD':'symbol':'1.2-2' }}
+              </span>
+            </div>
+
+            <div class="account-card__actions">
+              <bofa-button variant="secondary" size="sm" [routerLink]="['/transactions']"
+                [queryParams]="{ accountId: account.accountId }">
+                View Transactions
+              </bofa-button>
+              <bofa-button variant="ghost" size="sm" [disabled]="true">
+                Transfer
+              </bofa-button>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="spending-analytics" aria-label="Spending Analytics">
+      <h2 class="section-title">Spending Overview</h2>
+      <canvas #chartCanvas role="img" aria-label="Monthly spending chart"></canvas>
+    </section>
+
+  </div>
+} @else {
   <div class="dashboard-skeleton" aria-label="Loading dashboard" aria-busy="true">
     <div class="skeleton skeleton--header"></div>
     <div class="skeleton skeleton--balance"></div>
     <div class="skeleton-accounts">
-      <div class="skeleton skeleton--card" *ngFor="let i of [1,2,3]"></div>
+      @for (i of [1,2,3]; track $index) {
+        <div class="skeleton skeleton--card"></div>
+      }
     </div>
   </div>
-</ng-template>
+}

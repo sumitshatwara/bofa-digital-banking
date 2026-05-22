@@ -9,15 +9,19 @@
     </mat-form-field>
   </div>
 
-  <div *ngIf="isLoading" class="transaction-list__loading">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
+  @if (isLoading) {
+    <div class="transaction-list__loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
 
-  <div *ngIf="error" class="transaction-list__error">
-    <bofa-notification-banner [message]="error" type="error"></bofa-notification-banner>
-  </div>
+  @if (error) {
+    <div class="transaction-list__error">
+      <bofa-notification-banner [message]="error" type="error"></bofa-notification-banner>
+    </div>
+  }
 
-  <div *ngIf="!isLoading && !error">
+  @if (!isLoading && !error) {
     <table mat-table [dataSource]="dataSource" matSort (matSortChange)="onSortChange($event)">
       <ng-container matColumnDef="transactionDate">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
@@ -52,9 +56,11 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let txn">
-          <button mat-icon-button *ngIf="!txn.isFraudFlagged" (click)="flagForReview(txn)">
-            <mat-icon>flag</mat-icon>
-          </button>
+          @if (!txn.isFraudFlagged) {
+            <button mat-icon-button (click)="flagForReview(txn)">
+              <mat-icon>flag</mat-icon>
+            </button>
+          }
         </td>
       </ng-container>
 
@@ -68,5 +74,5 @@
       [pageSizeOptions]="[10, 25, 50, 100]"
       (page)="onPageChange($event)">
     </mat-paginator>
-  </div>
+  }
 </div>
