@@ -1,5 +1,6 @@
 import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 function generateCorrelationId(): string {
   return 'cid-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
@@ -15,7 +16,7 @@ export const auditLoggingInterceptor: HttpInterceptorFn = (req, next) => {
   const auditedReq = req.clone({
     headers: req.headers
       .set('X-Correlation-ID', correlationId)
-      .set('X-Client-App', 'mobile-api-gateway')
+      .set('X-Client-App', environment.appName)
   });
 
   console.info(`[AUDIT] ${req.method} ${sanitizeUrl(req.url)} — CID: ${correlationId}`);
