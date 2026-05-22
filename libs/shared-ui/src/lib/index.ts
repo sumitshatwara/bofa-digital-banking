@@ -15,7 +15,7 @@ export { BfaButtonComponent } from './button/bfa-button.component';
 export type { BfaButtonVariant, BfaButtonSize } from './button/bfa-button.component';
 
 export { BfaDataTableComponent } from './data-table/bfa-data-table.component';
-export type { TableColumn } from './data-table/bfa-data-table.component';
+export type { TableColumn, SortState } from './data-table/bfa-data-table.component';
 
 export { BfaNotificationComponent } from './notification-banner/bfa-notification.component';
 export type { NotificationType } from './notification-banner/bfa-notification.component';

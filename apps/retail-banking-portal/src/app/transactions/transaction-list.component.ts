@@ -7,7 +7,7 @@ import {
   ChangeDetectorRef
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { MatSort, Sort } from '@angular/material/sort';
+import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { Subject } from 'rxjs';
@@ -16,7 +16,7 @@ import { FormControl } from '@angular/forms';
 
 import { Transaction, TransactionFilter, TransactionCategory } from './transaction.model';
 import { BankingApiService } from '@bofa/shared-data-access';
-import { BfaDataTableComponent } from '@bofa/shared-ui';
+import { BfaDataTableComponent, SortState } from '@bofa/shared-ui';
 
 /**
  * Transaction List — displays paginated, sortable transaction history.
@@ -130,7 +130,7 @@ export class TransactionListComponent implements OnInit, OnDestroy {
       });
   }
 
-  onSortChange(sort: Sort): void {
+  onSortChange(sort: SortState): void {
     this.activeFilter = {
       ...this.activeFilter,
       sortField: sort.active,
