@@ -6,6 +6,10 @@ export class SsoAuthService {
     return false;
   }
 
+  hasRole(role: string): boolean {
+    return false;
+  }
+
   initiateSamlLogin(returnUrl: string): void {
     window.location.href = `https://sso.bankofamerica.internal/saml/login?RelayState=${encodeURIComponent(returnUrl)}`;
   }
